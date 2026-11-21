@@ -1,0 +1,64 @@
+# Rebuilds the card feed nightly: swu-db, with the official card database filling whatever swu-db
+# hasn't caught up on, that art mirrored into docs/art — then publishes docs/ with GitHub Pages.
+# Phones download docs/swu_catalog.json; none of them ever contacts the official site.
+name: Build card feed
+
+on:
+  schedule:
+    - cron: "17 7 * * *"      # daily, 07:17 UTC (late night in the US)
+  workflow_dispatch:           # Actions tab → Run workflow, for release day
+
+permissions:
+  contents: write              # commit docs/
+  pages: write
+  id-token: write
+
+concurrency:
+  group: card-feed
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow (art mirroring)
+        run: pip install "pillow>=11,<13"
+
+      - name: Build the catalog
+        run: |
+          python -I fetch_swu_catalog.py \
+            --rules catalog_rules.json \
+            --out docs/swu_catalog.json \
+            --previous docs/swu_catalog.json \
+            --art-dir docs/art \
+            --art-base "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/art/"
+
+      - name: Check it before publishing
+        run: python -I check_feed.py docs/swu_catalog.json docs/status.json
+
+      - name: Commit
+        run: |
+          touch docs/.nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A docs
+          # status.json changes every run, so there's always a commit: that also keeps GitHub from
+          # pausing this schedule after 60 quiet days.
+          git diff --cached --quiet || { git commit -q -m "Card feed $(date -u +%F)"; git push -q; }
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deploy
+        uses: actions/deploy-pages@v4

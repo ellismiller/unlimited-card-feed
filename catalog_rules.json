@@ -1,0 +1,34 @@
+{
+  "_comment": "Curated corrections applied to swu-db data. Read by BOTH tools/fetch_swu_catalog.py and the app (CatalogRules.kt) so the bundled catalog and in-app sync agree. Every entry was verified against the printed card.",
+  "nameFixes": {
+    "JTL-222": "Kimogila Heavy Fighter",
+    "SHD-118": "Kihraxz Heavy Fighter",
+    "ASH-089": "Perseverance",
+    "LAW-014": "Enfys Nest"
+  },
+  "dataFixes": {
+    "SOR-215": {
+      "type": "Upgrade",
+      "power": 1,
+      "hp": 1
+    },
+    "SHD-085": {
+      "hp": 1
+    }
+  },
+  "sameCard": [
+    [
+      "TWI-058",
+      "LOF-060"
+    ]
+  ],
+  "setCodeAliases": {
+    "LAWP": "LAWOP"
+  },
+  "excludeMainSets": [],
+  "minMainCards": 150,
+  "variantLinks": {},
+  "twinSunsPattern": "^Twin Suns\\b",
+  "productPattern": "^Intro Battle\\b",
+  "releaseDates": {}
+}
